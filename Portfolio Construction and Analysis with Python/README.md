@@ -10,9 +10,6 @@ This repository showcases my data analysis projects, demonstrating my skills in 
 
 This project applies concepts learned from the [Investment Management with Python and Machine Learning Specialization](https://www.coursera.org/learn/introduction-portfolio-construction-python?specialization=investment-management-python-machine-learning) on Coursera to analyze real financial data. Using the `yfinance` API, the project fetches historical price data for various assets to perform risk and return analysis, portfolio optimization, and more. This approach allows for the application of theoretical concepts learned in the course with up-to-date data from the stock market, demonstrating the practical application of investment strategies with real-world financial data. Detailed documentation can be found in the project's directory.
 
-### 2. [Second Project Title]
-
-[Description of the second project, its objectives, and key features.]
 
 ## Project Overview
 

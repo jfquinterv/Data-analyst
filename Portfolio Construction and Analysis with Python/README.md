@@ -23,9 +23,8 @@ The project consists of several Jupyter notebooks and Python scripts that demons
 ## Files Description
 
 - `Informe Cuantitativo.ipynb`: Quantitative analysis report, including detailed data analysis and visualization.
-- `Week 1.ipynb`, `Week 2.ipynb`: Weekly progress notebooks containing exercises and explorations based on the Coursera course.
 - `risk.py`: Python script for risk assessment functions.
-- `ind30_m_vw_rets.csv`, `Portfolios_Formed_on_ME_monthly_EW.csv`, `edhec-hedgefundindices.csv`: Datasets used for analysis.
+
 
 ## Technologies and Data Sources
 

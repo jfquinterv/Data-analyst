@@ -160,7 +160,7 @@ def cvar_historic(r, level=0.05):
     elif isinstance(r, pd.DataFrame):
         return r.aggregate(cvar_historic, level=level)
     else:
-        raise TypeError("Expected r to be a pd.Series or pd.DataFrame")
+         raise TypeError("Expected r to be a pd.Series or pd.DataFrame")
 
     
 def semideviation3(r):
@@ -178,7 +178,6 @@ def data_risk():
     """
     Read data in a csv file
     """
-    hfi =pd.read_csv('Data/edhec-hedgefundindices.csv',header=0, index_col=0, parse_dates=True, dayfirst=True)
     hfi =hfi/100
     hfi.index=hfi.index.to_period('M')
     return hfi
@@ -212,9 +211,9 @@ def data_ind():
    Ken French 30 Industry portafolio weighted monthly return
     """
     ind=pd.read_csv("Data/ind30_m_vw_rets.csv",header=0,index_col=0)/100
-    ind.index=pd.to_datetime(ind.index,format="%Y%m").to_period("M")
+    ind.index=pd.to_datetime(ind.index,format="%Y%m").to_period("M") #format time
     # Columns like Food and Fin has an embedded space, we want to get rid of the embedded space bacause it could cause us problems when we'r manipulating the data in the columns
-    ind.columns=ind.columns.str.strip()
+    ind.columns=ind.columns.str.strip() #similar to TRIM  function in EXCEL.
     return ind
 
 def portafolio_r(returns,weights):
@@ -230,8 +229,6 @@ def portafolio_vol(weight,covmatrix):
     """
     return (weight.T @ covmatrix @ weight)**0.5
 
-
- 
 def plot_ef2(n_points, er, cov):
     """
     Plots the 2-asset efficient frontier
@@ -246,52 +243,6 @@ def plot_ef2(n_points, er, cov):
         "Volatility": vols
     })
     return ef.plot.line(x="Volatility", y="Returns", style="--")
-
-
-
-def msr(risk_free, er, cov):
-    """
-    Risk_free_rate+ER+COV->W
-    """
-
-    # Number of assets in the portfolio
-    n = er.shape[0]
-
-    # Initial guess: Equal weight for each asset (1/n)
-    initial_guess = np.repeat(1/n, n)
-
-    # Define the bounds for each weight (between 0 and 1)
-    # This creates a tuple of (0.0, 1.0) pairs, one for each asset
-    bounds = ((0.0, 1.0),) * n
-
-    # Constraint 1: The sum of weights must be equal to 1
-    # This ensures that the total allocated percentage is 100%
-    weights_sum_1 = {
-        'type': 'eq',
-        'fun': lambda weights: np.sum(weights) - 1
-    }
-
-    # Optimization function
-    # 'options' are additional settings for the optimizer ('disp': False suppresses output)
-    # we can embed a function within a function
-    # the objetive function is the sharpe ratio, we can maximize using a minimization, minimizing
-    # the negative of the objective funtion. ¿how do i define the negative of sharpe ratio?
-   
-    def neg_sharpe_ratio(weights, risk_free, er, cov):
-        """
-        return negative sharpe ratio given the weights
-        """
-        rt=r.portafolio_r(er,weights)
-        vol=r.portafolio_vol(weights, cov)
-        return -(rt-risk_free)/vol
-        
-    results = minimize(neg_sharpe_ratio, initial_guess,
-                   args=(risk_free, er, cov), method="SLSQP",
-                   options={'disp': False},
-                   constraints=(weights_sum_1),
-                   bounds=bounds)
-    # Return the optimized weights
-    return results.x
 
 def minimize_vol(target, er, cov):
     """
@@ -364,7 +315,6 @@ def msr(risk_free, er, cov):
     """
    gives us the portafolio with the maximum sharpe ration give the risk free rate, expected returns and the variance-coviariance matrix.
     """
-
     # Number of assets in the portfolio
     n = er.shape[0]
 
@@ -374,13 +324,12 @@ def msr(risk_free, er, cov):
     # Define the bounds for each weight (between 0 and 1)
     # This creates a tuple of (0.0, 1.0) pairs, one for each asset
     bounds = ((0.0, 1.0),) * n
-
+    
     # Constraint 1: The sum of weights must be equal to 1
     # This ensures that the total allocated percentage is 100%
     weights_sum_1 = {
         'type': 'eq',
-        'fun': lambda weights: np.sum(weights) - 1
-    }
+        'fun': lambda weights: np.sum(weights) - 1}
 
     # Optimization function
     # 'options' are additional settings for the optimizer ('disp': False suppresses output)
@@ -403,25 +352,54 @@ def msr(risk_free, er, cov):
                    bounds=bounds)
     # Return the optimized weights
     return results.x
+
+#optimizer already can do the gmv portafolio, because we told him how to find the max sharpe ratio portafolio, ew portafolio what's the max sharpe ratio portafolio when all returns are the same, there's nothing you can do with the returns so the optimizer improve the sharpe ratio droping the volatility.
+
+
+def gmv(cov):
+    """
+    Returns the weights of glbal minimum vol portafolio given covariance matrix
+    """
+    n=cov.shape[0]
+    return msr(0,np.repeat(1,n),cov)
+   
     
-def plot_ef(er,cov, n_points, show_cml=False,style='.-',risk_free=0):
+      
+def plot_ef(er, cov, n_points, show_cml=False, risk_free=0, show_gmv=False, show_ew=False):
     """
-    efficient frontier
+    Plot the efficient frontier with options to show the Capital Market Line and Global Minimum Variance portfolio.
     """
-    weights=optimal_weights(er,cov, n_points)
-    rts=[portafolio_r(er,w) for w in weights]
-    vols=[portafolio_vol(w,cov)for w in weights]
-    ef=pd.DataFrame({"Returns":rts,
-                     "Volatility":vols})
-    ax=ef.plot.line(x="Volatility", y="Returns", style=style)
+    weights = optimal_weights(er, cov, n_points)
+    rts = [portafolio_r(er, w) for w in weights]
+    vols = [portafolio_vol(w, cov) for w in weights]
+    ef = pd.DataFrame({"Returns": rts, "Volatility": vols})
+    ax = ef.plot.line(x="Volatility", y="Returns", style='.-', label='Frontera Eficiente')
+
+    if show_ew:  # Display equally weighted portfolio
+        n = er.shape[0]
+        w_ew = np.repeat(1/n, n)
+        r_ew = portafolio_r(er, w_ew)
+        vol_ew = portafolio_vol(w_ew, cov)
+        ax.plot(vol_ew, r_ew, color="yellow", marker="o", markersize=9, label='Equally Weighted Portfolio')
+
+    if show_gmv:  # Display global minimum variance portfolio
+        w_gmv = gmv(cov)
+        r_gmv = portafolio_r(er, w_gmv)
+        vol_gmv = portafolio_vol(w_gmv, cov)
+        ax.plot(vol_gmv, r_gmv, color="blue", marker="o", markersize=9, label='Minimo de volatilidad global')
+
     if show_cml:
         ax.set_xlim(left=0)
-        w_msr=msr(risk_free,er,cov)
-        rt_msr=portafolio_r(er,w_msr)
-        vol_msr=portafolio_vol(w_msr,cov)
-        # Add CML
-        cml_x=[0,vol_msr]
-        cml_y=[risk_free,rt_msr]
-        ax.plot(cml_x,cml_y,color="green",linestyle="dashed",markersize=10, linewidth=2)
-    return ax
+        w_msr = msr(risk_free, er, cov)
+        rt_msr = portafolio_r(er, w_msr)
+        vol_msr = portafolio_vol(w_msr, cov)
+        cml_x = [0, vol_msr]
+        cml_y = [risk_free, rt_msr]
+        ax.plot(cml_x, cml_y, color="green", marker="o", linestyle="dashed", markersize=12, linewidth=2, label='Linea de Mercado de Capitales')
 
+    # Set title and show legend
+    ax.set_title('Modelo Markowitz', fontsize=14)
+    ax.legend()
+    ax.set_ylabel('Retornos')
+    ax.set_xlabel('Volatilidad')
+    return ax
